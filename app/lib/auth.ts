@@ -1,6 +1,14 @@
-import { verifyToken } from "@/app/lib/jwt";
+import jwt from "jsonwebtoken";
 
-export function getAuthUser(req: Request) {
+const JWT_SECRET = process.env.JWT_SECRET!;
+
+export interface AuthPayload {
+  userId: string;
+  email: string;
+  iat: number;
+}
+
+export function getUserFromRequest(req: Request): AuthPayload {
   const authHeader = req.headers.get("authorization");
 
   if (!authHeader || !authHeader.startsWith("Bearer ")) {
@@ -8,5 +16,11 @@ export function getAuthUser(req: Request) {
   }
 
   const token = authHeader.split(" ")[1];
-  return verifyToken(token);
+
+  try {
+    const decoded = jwt.verify(token, JWT_SECRET) as AuthPayload;
+    return decoded;
+  } catch {
+    throw new Error("Invalid token");
+  }
 }
